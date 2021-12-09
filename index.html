@@ -15,8 +15,8 @@
     <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js"></script>
 
     <link rel="stylesheet"
-          href="http://cdn.jsdelivr.net/gh/autodesk-forge/forge-extensions/public/extensions/IconMarkupExtension/contents/main.css">
-    <script src="http://cdn.jsdelivr.net/gh/autodesk-forge/forge-extensions/public/extensions/IconMarkupExtension/contents/main.js"></script>
+          href="https://cdn.jsdelivr.net/gh/autodesk-forge/forge-extensions/public/extensions/IconMarkupExtension/contents/main.css">
+    <script src="https://cdn.jsdelivr.net/gh/autodesk-forge/forge-extensions/public/extensions/IconMarkupExtension/contents/main.js"></script>
 
 
     <script src="eventstutorial.js"></script>
@@ -204,7 +204,7 @@
         // 加载模型文件。模型需要上传到 BIM 360 数据库中。Autodesk Forge 也有官方例子，可以加载本地文件。
         // 待进一步学习研究。
         var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Ympqc2YvYWFhLmZieA==';
-        //var model = 'svf/cube.svf'
+        var model = 'svf/cube.svf'
 
         // 模型加载成功后的回调函数。
         function onDocumentLoadSuccess(viewerDocument) {
@@ -251,8 +251,8 @@
             console.error('模型加载失败。未能获取 Forge manifest.');
         }
 
-        Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
-        // viewer.loadModel(model, {}, onDocumentLoadSuccess, onDocumentLoadFailure);
+        // Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
+        viewer.loadModel(model, {}, onDocumentLoadSuccess, onDocumentLoadFailure);
     };
 
 
