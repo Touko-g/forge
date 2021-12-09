@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=no"/>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css"
+          type="text/css">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css">
+
+    <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js"></script>
+
+    <link rel="stylesheet"
+          href="http://cdn.jsdelivr.net/gh/autodesk-forge/forge-extensions/public/extensions/IconMarkupExtension/contents/main.css">
+    <script src="http://cdn.jsdelivr.net/gh/autodesk-forge/forge-extensions/public/extensions/IconMarkupExtension/contents/main.js"></script>
+
+
+    <script src="eventstutorial.js"></script>
+    <script src="panel.js"></script>
+    <script src="markupExt.js"></script>
+    <!--    <script src="queryExt.js"></script>-->
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #forgeViewer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background-color: #F0F8FF;
+        }
+
+        .box {
+            min-width: 150px;
+            min-height: 80px;
+            background: rgb(79, 177, 230);
+            text-align: center;
+            position: relative;
+            left: 40px;
+            z-index: 999;
+            color: white;
+            font-size: 12px;
+            /*animation: rota 4s infinite ease;*/
+        }
+
+        .box::before {
+            content: '';
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgb(79, 177, 230);
+            position: absolute;
+            opacity: 0;
+            /*left: -32%;*/
+            /*top: 228%;*/
+            left: -44.8px;
+            top: 319.2px;
+            animation: color 1s infinite linear;
+        }
+
+        .box::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgb(79, 177, 230);
+            position: absolute;
+            /*left: -31%;*/
+            /*top: 230%;*/
+            left: -44.4px;
+            top: 187px;
+        }
+
+        .content {
+            position: relative;
+            z-index: 999;
+            padding: 16px;
+        }
+        .title{
+            font-weight: bold;
+            padding: 3px 0;
+        }
+        .mes{
+            padding: 2px 0;
+        }
+
+        .content::after {
+            position: absolute;
+            /*left: -14%;*/
+            /*top: 25%;*/
+            left: -20px;
+            top: 20px;
+            content: '';
+            width: 1px;
+            height: 40px;
+            transform: rotate(90deg);
+            background: rgb(79, 177, 230);
+            z-index: 888;
+        }
+
+        .content::before {
+            position: absolute;
+            /*left: -28%;*/
+            /*top: 50%;*/
+            left: -40px;
+            top: 40px;
+            content: '';
+            width: 1px;
+            height: 150px;
+            background: rgb(79, 177, 230);
+        }
+
+        @keyframes rota {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes color {
+            from {
+                width: 10px;
+                height: 10px;
+                opacity: .1;
+                /*left: -31.3%;*/
+                /*top: 230%;*/
+                left: -44.4px;
+                top: 187px;
+            }
+
+            to {
+                width: 20px;
+                height: 20px;
+                opacity: .5;
+                /*left: -35%;*/
+                /*top: 225%;*/
+                left: -49.4px;
+                top: 182.5px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+<div id="forgeViewer"></div>
+<div style="position: fixed;z-index: 999;display: none;opacity: .9" class="app">
+    <div class="box">
+        <div class="content">
+            <div class="title">分集水器</div>
+            <div class="mes">办公楼高区供水温度 : 13.70 ℃</div>
+            <div class="mes">办公楼高区流量 : 141.70 m3/H</div>
+        </div>
+    </div>
+</div>
+<script>
+    var viewerApp, viewer
+
+    // 加载模型后得到的对象。
+    var model = null
+
+
+    var options = {
+        env: "AutodeskProduction2",
+        api: 'streamingV2',
+        language: 'zh-cn',
+        getAccessToken: function (onSuccess) {
+            var accessToken = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IlU3c0dGRldUTzlBekNhSzBqZURRM2dQZXBURVdWN2VhIn0.eyJzY29wZSI6WyJjb2RlOmFsbCIsImRhdGE6d3JpdGUiLCJkYXRhOnJlYWQiLCJidWNrZXQ6Y3JlYXRlIiwiYnVja2V0OmRlbGV0ZSIsImJ1Y2tldDpyZWFkIl0sImNsaWVudF9pZCI6Ik5CR0hpRmRTbmh6ZWhleG5kV3Jncjh1bU5VMExMb1JBIiwiYXVkIjoiaHR0cHM6Ly9hdXRvZGVzay5jb20vYXVkL2Fqd3RleHA2MCIsImp0aSI6Imc1QjdUN1VrNkZCb0h5TXA0OWhpODRxRHc4b0R6b0R4YXZxZEV2SjM1aUh0bFB4akdiTjBLWDdDMUc2UXd5SnUiLCJleHAiOjE2MzkwMjY2Nzh9.TWpJmmNXDURag3XiliiJmdLvQLsdqGI_1gTPJqUzfnXFXDOYb8fSCjlbgBqOKhheR8RORrds2aVpBz8XLutMpUru_ZXBGLaCgRM6yfBUipgovX6-gXGkZAxN89EzXDMyJIyJ6uVaGHPOhMcL-WzKYi7Abe3Wh3luNCNmHnWJcvOvfTfc0bT9jRDMDFh0OLm5zPrZxqklCanovicIQNLIox0rc1vHi0zzSmHqsC5fCCXLrnc2xpKNHsBW2TN194-78zIAOL3D4tsk088VTwWwo4TqtOr2b_w8Rvv-LRqs34-sbUqSEHaUYtEYTSTUmmyeGR_5ji8YSxR4bOdHIu9eCA'
+            var expirationTimeSeconds = 3600;
+            onSuccess(accessToken, expirationTimeSeconds);
+        }
+    }
+    var viewConfig = {
+        extensions: ['MyAwesomeExtension', 'EventsTutorial', 'Autodesk.Viewing.MarkupsCore', 'MarkUp3DExtension']
+    }
+
+    // Forge Viewer 初始化时的回调函数
+    var myCallback = function () {
+        console.log("初始化成功, 准备创建 Viewer...");
+
+        var htmlDiv = document.getElementById('forgeViewer');
+
+        viewer = new Autodesk.Viewing.GuiViewer3D(htmlDiv, viewConfig);
+
+        var startedCode = viewer.start();
+
+        if (startedCode > 0) {
+            console.error('Failed to create a Viewer: WebGL not supported.');
+            return;
+        }
+
+        console.log('Viewer 创建成功，准备加载 model...');
+
+        // 加载模型文件。模型需要上传到 BIM 360 数据库中。Autodesk Forge 也有官方例子，可以加载本地文件。
+        // 待进一步学习研究。
+        var documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6Ympqc2YvYWFhLmZieA==';
+        //var model = 'svf/cube.svf'
+
+        // 模型加载成功后的回调函数。
+        function onDocumentLoadSuccess(viewerDocument) {
+            let geometry = viewerDocument.getRoot().getDefaultGeometry();
+
+            viewer.loadDocumentNode(viewerDocument, geometry).then(m => {
+                model = m
+                console.log('模型加载完毕：', model)
+
+                // viewer.loadExtension('Autodesk.Viewing.MarkupsCore').then(function(markupsExt){
+                //     markup = markupsExt;
+                //     console.log('Markup = ', markup)
+
+                // });
+
+                viewer.loadExtension('IconMarkupExtension', {
+                    button: {
+                        icon: 'fa-thermometer-half',
+                        tooltip: 'Show Temperature'
+                    },
+                    icons: [
+                        {dbId: 172, label: '55&#176;C', css: 'fas fa-thermometer-full'},
+                        {dbId: 173, label: '55&#176;C', css: 'fas fa-thermometer-full'},
+                        {dbId: 174, label: '55&#176;C', css: 'fas fa-thermometer-full'},
+                        {dbId: 175, label: '56&#176;C', css: 'fas fa-thermometer-full'},
+                        {dbId: 176, label: '45&#176;C', css: 'fas fa-thermometer-empty'},
+                        {dbId: 177, css: 'fas fa-exclamation-triangle'},
+                        {dbId: 178, label: '50&#176;C', css: 'fas fa-thermometer-half'},
+                    ],
+                    onClick: (id) => {
+                        viewers.select(id);
+                        viewers.utilities.fitToView();
+                        switch (id) {
+                            case 176:
+                                alert('Sensor offline');
+                        }
+                    }
+                })
+            })
+        }
+
+        // 模型文件加载失败后的回调函数
+        function onDocumentLoadFailure() {
+            console.error('模型加载失败。未能获取 Forge manifest.');
+        }
+
+        Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
+        // viewer.loadModel(model, {}, onDocumentLoadSuccess, onDocumentLoadFailure);
+    };
+
+
+    Autodesk.Viewing.Initializer(options, myCallback);
+
+
+</script>
+</body>
+</html>
